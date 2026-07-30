@@ -1,7 +1,8 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.api.dependencies import get_story_service
 from app.schemas.generation import (
     ContinueStoryRequest,
     GenerationRequest,
@@ -13,6 +14,7 @@ from app.schemas.responses import (
     StoryListResponse,
     StoryResponse,
 )
+from app.services.story_service import StoryService
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
@@ -23,10 +25,24 @@ logger = logging.getLogger(__name__)
     "",
     response_model=StoryResponse,
     status_code=status.HTTP_201_CREATED,
-    responses={500: {"model": ErrorResponse}},
+    responses={422: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
-def create_story(request: GenerationRequest) -> StoryResponse:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+def create_story(
+    request: GenerationRequest,
+    service: StoryService = Depends(get_story_service),
+) -> StoryResponse:
+    try:
+        story = service.generate(request)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error during story generation")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
+    return StoryResponse.model_validate(story.model_dump())
 
 
 @router.get(
