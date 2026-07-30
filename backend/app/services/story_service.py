@@ -8,6 +8,7 @@ from app.models.scene import Scene
 from app.models.story import Story, StoryCard
 from app.schemas.generation import ContinueStoryRequest, GenerationRequest
 from app.services.gemini_client import GeminiClient
+from app.services.storage_service import StorageService
 from app.utils.helpers import generate_id
 
 logger = logging.getLogger(__name__)
@@ -17,15 +18,13 @@ _GEMINI_MODEL = "gemini-2.0-flash"
 
 
 class StoryService:
-    def __init__(self, gemini: GeminiClient) -> None:
+    def __init__(self, gemini: GeminiClient, storage: StorageService | None = None) -> None:
         self._gemini = gemini
+        self._storage = storage
 
-    # ------------------------------------------------------------------
-    # POST /stories
-    # ------------------------------------------------------------------
-    def generate(self, request: GenerationRequest) -> Story:
+    def generate_raw(self, request: GenerationRequest) -> Story:
         logger.info(
-            "Generating story: universe=%s character=%s",
+            "Generating raw story text: universe=%s character=%s",
             request.universe,
             request.character_name,
         )
@@ -70,23 +69,49 @@ class StoryService:
                 pipeline_version=_PIPELINE_VERSION,
             ),
         )
+        return story
+
+    # ------------------------------------------------------------------
+    # POST /stories
+    # ------------------------------------------------------------------
+    def generate(self, request: GenerationRequest) -> Story:
+        story = self.generate_raw(request)
+
+        if self._storage is not None:
+            self._storage.save_story(story)
 
         logger.info("Story generated: id=%s title=%r", story.story_id, story.title)
         return story
 
     # ------------------------------------------------------------------
-    # Remaining methods — not implemented in this milestone
+    # GET /stories
     # ------------------------------------------------------------------
     def list_stories(self) -> list[StoryCard]:
+        if self._storage is not None:
+            return self._storage.list_stories()
         raise NotImplementedError
 
+    # ------------------------------------------------------------------
+    # GET /stories/{story_id}
+    # ------------------------------------------------------------------
     def get_story(self, story_id: str) -> Story:
+        if self._storage is not None:
+            return self._storage.get_story(story_id)
         raise NotImplementedError
 
+    # ------------------------------------------------------------------
+    # POST /stories/{story_id}/continue
+    # ------------------------------------------------------------------
     def continue_story(self, story_id: str, request: ContinueStoryRequest) -> Story:
         raise NotImplementedError
 
+    # ------------------------------------------------------------------
+    # DELETE /stories/{story_id}
+    # ------------------------------------------------------------------
     def delete_story(self, story_id: str) -> None:
+        if self._storage is not None:
+            self._storage.delete_story(story_id)
+            return
         raise NotImplementedError
 
 

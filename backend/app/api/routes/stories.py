@@ -2,7 +2,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_story_service
+from app.api.dependencies import get_pipeline_service, get_story_service
+from app.models.story import StoryCard
 from app.schemas.generation import (
     ContinueStoryRequest,
     GenerationRequest,
@@ -11,9 +12,9 @@ from app.schemas.generation import (
 from app.schemas.responses import (
     ErrorResponse,
     RegenerateSceneResponse,
-    StoryListResponse,
     StoryResponse,
 )
+from app.services.pipeline_service import PipelineService
 from app.services.story_service import StoryService
 
 router = APIRouter(prefix="/stories", tags=["stories"])
@@ -29,10 +30,10 @@ logger = logging.getLogger(__name__)
 )
 def create_story(
     request: GenerationRequest,
-    service: StoryService = Depends(get_story_service),
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
 ) -> StoryResponse:
     try:
-        story = service.generate(request)
+        story = pipeline_service.run(request)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
@@ -47,20 +48,42 @@ def create_story(
 
 @router.get(
     "",
-    response_model=StoryListResponse,
+    response_model=list[StoryCard],
     responses={500: {"model": ErrorResponse}},
 )
-def list_stories() -> StoryListResponse:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+def list_stories(
+    service: StoryService = Depends(get_story_service),
+) -> list[StoryCard]:
+    try:
+        return service.list_stories()
+    except Exception as exc:
+        logger.exception("Unexpected error listing stories")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
 
 
 @router.get(
     "/{story_id}",
     response_model=StoryResponse,
-    responses={404: {"model": ErrorResponse}},
+    responses={404: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
-def get_story(story_id: str) -> StoryResponse:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+def get_story(
+    story_id: str,
+    service: StoryService = Depends(get_story_service),
+) -> StoryResponse:
+    try:
+        story = service.get_story(story_id)
+        return StoryResponse.model_validate(story.model_dump())
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error getting story %s", story_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
 
 
 @router.post(
@@ -84,7 +107,20 @@ def regenerate_scene(story_id: str, request: RegenerateSceneRequest) -> Regenera
 @router.delete(
     "/{story_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={404: {"model": ErrorResponse}},
+    responses={404: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
 )
-def delete_story(story_id: str) -> None:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+def delete_story(
+    story_id: str,
+    service: StoryService = Depends(get_story_service),
+) -> None:
+    try:
+        service.delete_story(story_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error deleting story %s", story_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc

@@ -1,7 +1,5 @@
 """
-Tests for POST /api/stories (story generation) and the remaining 501 scaffolded routes.
-
-POST /api/stories is tested using FastAPI dependency_overrides so no real Gemini call is made.
+Tests for /api/stories endpoints (POST, GET, GET {id}, DELETE {id}) and remaining 501 routes.
 """
 
 from datetime import UTC, datetime
@@ -10,11 +8,11 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_story_service
+from app.api.dependencies import get_pipeline_service, get_story_service
 from app.main import app
 from app.models.metadata import StoryMetadata
 from app.models.scene import Scene
-from app.models.story import Story
+from app.models.story import Story, StoryCard
 
 # ---------------------------------------------------------------------------
 # Shared fixture data
@@ -36,14 +34,14 @@ _FAKE_STORY = Story(
             title="The Dark Corridor",
             description="Elias walks through a torchlit hallway.",
             image_prompt="A dark stone corridor lit by flickering torches.",
-            image_url="",
+            image_url="https://example.com/scene_01.png",
         ),
         Scene(
             scene_number=2,
             title="The Hidden Door",
             description="A door appears behind a tapestry.",
             image_prompt="An ancient wooden door hidden behind a tattered tapestry.",
-            image_url="",
+            image_url="https://example.com/scene_02.png",
         ),
     ],
     metadata=StoryMetadata(
@@ -64,8 +62,11 @@ _VALID_REQUEST = {
 
 
 def _make_client(mock_service: MagicMock) -> TestClient:
-    """Return a TestClient with get_story_service overridden."""
+    """Return a TestClient with dependencies overridden."""
+    mock_pipeline_service = MagicMock()
+    mock_pipeline_service.run.side_effect = mock_service.generate
     app.dependency_overrides[get_story_service] = lambda: mock_service
+    app.dependency_overrides[get_pipeline_service] = lambda: mock_pipeline_service
     c = TestClient(app)
     return c
 
@@ -80,7 +81,7 @@ def _clear_overrides() -> None:
 
 
 def test_create_story_returns_201() -> None:
-    """POST /api/stories returns 201 and a well-formed Story when the service succeeds."""
+    """POST /api/stories returns 201 and a well-formed Story when the pipeline succeeds."""
     mock_service = MagicMock()
     mock_service.generate.return_value = _FAKE_STORY
     c = _make_client(mock_service)
@@ -98,8 +99,8 @@ def test_create_story_returns_201() -> None:
     assert data["scenes"][0]["scene_number"] == 1
 
 
-def test_create_story_calls_service_generate() -> None:
-    """The route delegates to StoryService.generate with the correct request."""
+def test_create_story_calls_pipeline_run() -> None:
+    """The route delegates to PipelineService.run with the correct request."""
     mock_service = MagicMock()
     mock_service.generate.return_value = _FAKE_STORY
     c = _make_client(mock_service)
@@ -121,7 +122,7 @@ def test_create_story_validation_error_returns_422() -> None:
 
 
 def test_create_story_service_value_error_returns_422() -> None:
-    """If the service raises ValueError (bad JSON from Gemini), return 422."""
+    """If the pipeline raises ValueError (bad JSON from Gemini), return 422."""
     mock_service = MagicMock()
     mock_service.generate.side_effect = ValueError("Gemini returned invalid JSON")
     c = _make_client(mock_service)
@@ -147,6 +148,94 @@ def test_create_story_service_runtime_error_returns_500() -> None:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/stories
+# ---------------------------------------------------------------------------
+
+
+def test_list_stories_returns_200() -> None:
+    mock_service = MagicMock()
+    mock_service.list_stories.return_value = [
+        StoryCard(story_id="test-uuid-001", title="The Hidden Chamber", thumbnail="")
+    ]
+    c = _make_client(mock_service)
+    try:
+        response = c.get("/api/stories")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["story_id"] == "test-uuid-001"
+    assert data[0]["title"] == "The Hidden Chamber"
+
+
+# ---------------------------------------------------------------------------
+# GET /api/stories/{story_id}
+# ---------------------------------------------------------------------------
+
+
+def test_get_story_returns_200() -> None:
+    mock_service = MagicMock()
+    mock_service.get_story.return_value = _FAKE_STORY
+    c = _make_client(mock_service)
+    try:
+        response = c.get("/api/stories/test-uuid-001")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["story_id"] == "test-uuid-001"
+    assert data["title"] == "The Hidden Chamber"
+
+
+def test_get_story_not_found_returns_404() -> None:
+    mock_service = MagicMock()
+    mock_service.get_story.side_effect = FileNotFoundError("Story not found")
+    c = _make_client(mock_service)
+    try:
+        response = c.get("/api/stories/non-existent")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "Story not found"}
+
+
+# ---------------------------------------------------------------------------
+# DELETE /api/stories/{story_id}
+# ---------------------------------------------------------------------------
+
+
+def test_delete_story_returns_204() -> None:
+    mock_service = MagicMock()
+    mock_service.delete_story.return_value = None
+    c = _make_client(mock_service)
+    try:
+        response = c.delete("/api/stories/test-uuid-001")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 204
+    mock_service.delete_story.assert_called_once_with("test-uuid-001")
+
+
+def test_delete_story_not_found_returns_404() -> None:
+    mock_service = MagicMock()
+    mock_service.delete_story.side_effect = FileNotFoundError("Story not found")
+    c = _make_client(mock_service)
+    try:
+        response = c.delete("/api/stories/non-existent")
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "Story not found"}
+
+
+# ---------------------------------------------------------------------------
 # Remaining scaffolded routes still return 501
 # ---------------------------------------------------------------------------
 
@@ -154,11 +243,8 @@ def test_create_story_service_runtime_error_returns_500() -> None:
 @pytest.mark.parametrize(
     "method,url,body",
     [
-        ("GET", "/api/stories", None),
-        ("GET", "/api/stories/some-uuid", None),
         ("POST", "/api/stories/some-uuid/continue", {"prompt": "Continue."}),
         ("POST", "/api/stories/some-uuid/regenerate-scene", {"scene_number": 2}),
-        ("DELETE", "/api/stories/some-uuid", None),
     ],
 )
 def test_unimplemented_routes_return_501(method: str, url: str, body: dict | None) -> None:
