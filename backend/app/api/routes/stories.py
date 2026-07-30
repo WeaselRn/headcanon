@@ -89,10 +89,33 @@ def get_story(
 @router.post(
     "/{story_id}/continue",
     response_model=StoryResponse,
-    responses={404: {"model": ErrorResponse}},
+    responses={
+        404: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
 )
-def continue_story(story_id: str, request: ContinueStoryRequest) -> StoryResponse:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+def continue_story(
+    story_id: str,
+    request: ContinueStoryRequest,
+    pipeline_service: PipelineService = Depends(get_pipeline_service),
+) -> StoryResponse:
+    try:
+        story = pipeline_service.continue_story(story_id, request)
+        return StoryResponse.model_validate(story.model_dump())
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    except Exception as exc:
+        logger.exception("Unexpected error continuing story %s", story_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
 
 
 @router.post(

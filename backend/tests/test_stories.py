@@ -1,5 +1,5 @@
 """
-Tests for /api/stories endpoints (POST, GET, GET {id}, DELETE {id}) and remaining 501 routes.
+Tests for /api/stories endpoints (POST, GET, GET {id}, POST {id}/continue, DELETE {id}).
 """
 
 from datetime import UTC, datetime
@@ -61,12 +61,14 @@ _VALID_REQUEST = {
 }
 
 
-def _make_client(mock_service: MagicMock) -> TestClient:
+def _make_client(mock_service: MagicMock, mock_pipeline: MagicMock | None = None) -> TestClient:
     """Return a TestClient with dependencies overridden."""
-    mock_pipeline_service = MagicMock()
-    mock_pipeline_service.run.side_effect = mock_service.generate
+    if mock_pipeline is None:
+        mock_pipeline = MagicMock()
+        mock_pipeline.run.side_effect = mock_service.generate
+        mock_pipeline.continue_story.side_effect = mock_service.continue_story
     app.dependency_overrides[get_story_service] = lambda: mock_service
-    app.dependency_overrides[get_pipeline_service] = lambda: mock_pipeline_service
+    app.dependency_overrides[get_pipeline_service] = lambda: mock_pipeline
     c = TestClient(app)
     return c
 
@@ -205,6 +207,47 @@ def test_get_story_not_found_returns_404() -> None:
 
 
 # ---------------------------------------------------------------------------
+# POST /api/stories/{story_id}/continue
+# ---------------------------------------------------------------------------
+
+
+def test_continue_story_returns_200() -> None:
+    mock_service = MagicMock()
+    mock_service.continue_story.return_value = _FAKE_STORY
+    c = _make_client(mock_service)
+    try:
+        response = c.post(
+            "/api/stories/test-uuid-001/continue", json={"prompt": "Continue narrative."}
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["story_id"] == "test-uuid-001"
+
+
+def test_continue_story_not_found_returns_404() -> None:
+    mock_service = MagicMock()
+    mock_service.continue_story.side_effect = FileNotFoundError("Story not found")
+    c = _make_client(mock_service)
+    try:
+        response = c.post(
+            "/api/stories/non-existent/continue", json={"prompt": "Continue narrative."}
+        )
+    finally:
+        _clear_overrides()
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "Story not found"}
+
+
+def test_continue_story_validation_error_returns_422() -> None:
+    response = TestClient(app).post("/api/stories/test-uuid-001/continue", json={})
+    assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
 # DELETE /api/stories/{story_id}
 # ---------------------------------------------------------------------------
 
@@ -243,7 +286,6 @@ def test_delete_story_not_found_returns_404() -> None:
 @pytest.mark.parametrize(
     "method,url,body",
     [
-        ("POST", "/api/stories/some-uuid/continue", {"prompt": "Continue."}),
         ("POST", "/api/stories/some-uuid/regenerate-scene", {"scene_number": 2}),
     ],
 )

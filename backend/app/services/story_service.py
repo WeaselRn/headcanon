@@ -71,6 +71,41 @@ class StoryService:
         )
         return story
 
+    def generate_continuation_raw(
+        self, existing_story: Story, request: ContinueStoryRequest
+    ) -> tuple[str, list[Scene]]:
+        logger.info("Generating story continuation for id=%s", existing_story.story_id)
+
+        next_scene_number = max([s.scene_number for s in existing_story.scenes], default=0) + 1
+
+        template = self._gemini.load_prompt("continue_story.txt")
+        prompt = template.format(
+            universe=existing_story.universe,
+            character_name=existing_story.character_name,
+            role=existing_story.role,
+            mood=existing_story.mood,
+            current_story=existing_story.story,
+            prompt=request.prompt,
+            next_scene_number=next_scene_number,
+        )
+
+        raw = self._gemini.generate_text(prompt)
+        data: dict[str, Any] = _parse_json(raw)
+
+        continuation_text = str(data["continuation_text"])
+        new_scenes = [
+            Scene(
+                scene_number=s["scene_number"],
+                title=s["title"],
+                description=s["description"],
+                image_prompt=s["image_prompt"],
+                image_url=s.get("image_url", ""),
+            )
+            for s in data["scenes"]
+        ]
+
+        return continuation_text, new_scenes
+
     # ------------------------------------------------------------------
     # POST /stories
     # ------------------------------------------------------------------
@@ -103,7 +138,18 @@ class StoryService:
     # POST /stories/{story_id}/continue
     # ------------------------------------------------------------------
     def continue_story(self, story_id: str, request: ContinueStoryRequest) -> Story:
-        raise NotImplementedError
+        if self._storage is None:
+            raise NotImplementedError
+        story = self._storage.get_story(story_id)
+        continuation_text, new_scenes = self.generate_continuation_raw(story, request)
+
+        story.story = f"{story.story}\n\n{continuation_text}"
+        story.scenes.extend(new_scenes)
+        story.metadata.updated_at = datetime.now(tz=UTC)
+
+        self._storage.save_story(story)
+        logger.info("Story continued for id=%s", story_id)
+        return story
 
     # ------------------------------------------------------------------
     # DELETE /stories/{story_id}
