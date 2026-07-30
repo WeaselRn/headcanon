@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Provenance(BaseModel):
@@ -10,3 +10,5 @@ class Provenance(BaseModel):
     started_at: datetime
     completed_at: datetime
     assets_generated: list[str]
+    status: str = "completed"
+    storage_locations: list[str] = Field(default_factory=list)

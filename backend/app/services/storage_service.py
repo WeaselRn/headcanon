@@ -18,6 +18,25 @@ class StorageService:
         prefix = f"stories/{story.story_id}/"
         logger.info("Saving story %s to storage", story.story_id)
 
+        if provenance is None:
+            now = datetime.now(tz=UTC)
+            provenance = Provenance(
+                execution_id=story.story_id,
+                pipeline_version=story.metadata.pipeline_version,
+                models_used=story.metadata.models,
+                started_at=now,
+                completed_at=now,
+                assets_generated=["story.md", "metadata.json", "provenance.json"],
+                status="completed",
+                storage_locations=[
+                    f"{prefix}story.md",
+                    f"{prefix}metadata.json",
+                    f"{prefix}provenance.json",
+                ],
+            )
+
+        story.provenance = provenance
+
         # 1. story.md
         story_md_key = f"{prefix}story.md"
         self.client.upload(story_md_key, story.story.encode("utf-8"), content_type="text/markdown")
@@ -31,17 +50,6 @@ class StorageService:
         )
 
         # 3. provenance.json
-        if provenance is None:
-            now = datetime.now(tz=UTC)
-            provenance = Provenance(
-                execution_id=story.story_id,
-                pipeline_version=story.metadata.pipeline_version,
-                models_used=story.metadata.models,
-                started_at=now,
-                completed_at=now,
-                assets_generated=["story.md", "metadata.json", "provenance.json"],
-            )
-
         provenance_key = f"{prefix}provenance.json"
         self.client.upload(
             provenance_key,
@@ -53,11 +61,24 @@ class StorageService:
 
     def get_story(self, story_id: str) -> Story:
         metadata_key = f"stories/{story_id}/metadata.json"
+        provenance_key = f"stories/{story_id}/provenance.json"
         logger.info("Getting story %s from storage", story_id)
         try:
             data = self.client.download(metadata_key)
             story_dict: dict[str, Any] = json.loads(data.decode("utf-8"))
-            return Story.model_validate(story_dict)
+            story = Story.model_validate(story_dict)
+
+            if story.provenance is None:
+                try:
+                    prov_data = self.client.download(provenance_key)
+                    prov_dict: dict[str, Any] = json.loads(prov_data.decode("utf-8"))
+                    story.provenance = Provenance.model_validate(prov_dict)
+                except FileNotFoundError:
+                    logger.warning("Provenance file not found for story %s", story_id)
+                except Exception as exc:
+                    logger.warning("Failed to parse provenance for story %s: %s", story_id, exc)
+
+            return story
         except FileNotFoundError as exc:
             raise FileNotFoundError(f"Story '{story_id}' not found.") from exc
 

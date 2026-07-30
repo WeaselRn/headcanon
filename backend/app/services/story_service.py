@@ -177,7 +177,7 @@ def _parse_json(raw: str) -> dict[str, Any]:
         # drop first (```json or ```) and last (```) lines
         text = "\n".join(lines[1:-1]).strip()
     try:
-        result: dict[str, Any] = json.loads(text)
+        result: dict[str, Any] = json.loads(text, strict=False)
         return result
     except json.JSONDecodeError as exc:
         logger.error("Failed to parse Gemini JSON response: %s\nRaw:\n%s", exc, raw[:500])

@@ -47,12 +47,25 @@ def test_provenance_model() -> None:
         started_at=now,
         completed_at=now,
         assets_generated=["scene_01.png"],
+        status="completed",
+        storage_locations=["stories/exec-123/scene_01.png"],
     )
     assert prov.execution_id == "exec-123"
     assert prov.assets_generated == ["scene_01.png"]
+    assert prov.status == "completed"
+    assert prov.storage_locations == ["stories/exec-123/scene_01.png"]
 
 
 def test_story_model() -> None:
+    now = datetime.now(tz=UTC)
+    prov = Provenance(
+        execution_id="uuid-001",
+        pipeline_version="v1",
+        models_used=["gemini-pro"],
+        started_at=now,
+        completed_at=now,
+        assets_generated=["story.md"],
+    )
     story = Story(
         story_id="uuid-001",
         title="The Hidden Chamber",
@@ -63,9 +76,12 @@ def test_story_model() -> None:
         story="Once upon a time...",
         scenes=[_make_scene()],
         metadata=_make_metadata(),
+        provenance=prov,
     )
     assert story.story_id == "uuid-001"
     assert len(story.scenes) == 1
+    assert story.provenance is not None
+    assert story.provenance.execution_id == "uuid-001"
 
 
 def test_story_card_model() -> None:
