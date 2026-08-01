@@ -1,0 +1,38 @@
+You are given a fully reconstructed fictional universe.
+
+Do NOT invent new lore.
+
+Initialize the world's current state exactly as it exists at the beginning of the interactive experience.
+
+Determine:
+
+• Current in-universe date and time (if known)
+• Current active location of every important character
+• Character inventories
+• Character emotional states
+• Active events
+• Pending events
+• Active quests or conflicts
+• Weather/environment (if relevant)
+• Occupants of every location
+• Important world variables
+
+Preserve canon exactly.
+
+Return ONLY JSON.
+
+{
+  "world_state": {
+    "current_time": "",
+    "current_location": {},
+    "character_states": [],
+    "location_states": [],
+    "active_events": [],
+    "pending_events": [],
+    "world_variables": {}
+  }
+}
+
+Universe:
+
+{universe}

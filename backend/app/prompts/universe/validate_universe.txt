@@ -1,0 +1,25 @@
+Validate this reconstructed universe.
+
+Check for:
+
+- missing references
+- dangling relationships
+- duplicate IDs
+- impossible timelines
+- invalid locations
+- missing faction members
+- missing entity references
+
+Do NOT invent new lore.
+
+Return:
+
+{
+  "valid":true,
+  "errors":[],
+  "warnings":[]
+}
+
+Universe:
+
+{universe}

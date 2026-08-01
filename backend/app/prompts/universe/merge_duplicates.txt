@@ -1,0 +1,30 @@
+You are cleaning a reconstructed fictional universe.
+
+Merge duplicate entities.
+
+Examples:
+
+Harry Potter
+Harry
+
+The Dark Lord
+Voldemort
+
+If two entities refer to the same thing, merge them.
+
+Preserve:
+
+- canonical name
+- aliases
+- all relationships
+
+Return ONLY JSON.
+
+{
+  "entities":[],
+  "changes":[]
+}
+
+Universe:
+
+{universe}

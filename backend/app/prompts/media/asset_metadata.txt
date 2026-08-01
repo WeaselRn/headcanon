@@ -1,0 +1,87 @@
+You are responsible for generating metadata for AI-generated media assets.
+
+The metadata will be stored alongside the asset in Backblaze B2 and used for retrieval, search, provenance tracking, versioning, and future regeneration.
+
+Using the current scene and generation outputs, produce metadata for the generated asset.
+
+Include:
+
+- asset identifier
+- universe identifier
+- world state identifier
+- scene identifier
+- asset type
+- source location
+- participating characters
+- important objects
+- generation model
+- prompt hash
+- creation timestamp
+- storage path
+- generation parameters
+- provenance information
+
+Return ONLY valid JSON.
+
+Format:
+
+{
+  "asset_id": "",
+  "asset_type": "image | narration | ambience",
+  "universe_id": "",
+  "world_state_id": "",
+  "scene_id": "",
+
+  "location": "",
+  "characters": [],
+  "objects": [],
+
+  "generated_by": "",
+  "model": "",
+  "prompt_hash": "",
+
+  "generation_settings": {
+    "aspect_ratio": "",
+    "resolution": "",
+    "voice": "",
+    "emotion": "",
+    "duration": ""
+  },
+
+  "storage": {
+    "provider": "Backblaze B2",
+    "bucket": "",
+    "key": "",
+    "url": ""
+  },
+
+  "provenance": {
+    "source_story": "",
+    "source_scene": "",
+    "timeline_event": "",
+    "world_snapshot": "",
+    "canon_state": ""
+  },
+
+  "created_at": ""
+}
+
+Rules:
+
+- Never invent characters not present.
+- Never invent locations.
+- Metadata must exactly reflect the generated asset.
+- Use IDs from the supplied world state whenever possible.
+- Output ONLY JSON.
+
+Current Scene:
+
+{scene}
+
+World State:
+
+{world_state}
+
+Generated Asset:
+
+{asset}
