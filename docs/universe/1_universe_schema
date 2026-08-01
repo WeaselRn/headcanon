@@ -1,0 +1,2155 @@
+# Universe Schema
+
+**Version:** 1.0
+
+**Status:** Draft
+
+**Owner:** Headcanon Core Engine
+
+---
+
+# 1. Purpose
+
+The Universe Schema defines the canonical structure of every Headcanon universe.
+
+It is the **single source of truth** for every engine within the Headcanon ecosystem.
+
+Every imported story is transformed into one Universe object.
+
+Once created, every engine—including Character Engine, Simulation Engine, Scene Engine, Memory Engine and Media Pipeline—operates using this Universe instead of the original story.
+
+The original story becomes an import source only.
+
+The Universe becomes the persistent representation of that fictional world.
+
+---
+
+# 2. Design Principles
+
+The Universe follows several strict architectural principles.
+
+## 2.1 Single Source of Truth
+
+Every piece of canonical information should exist exactly once.
+
+Example:
+
+Hermione's personality is stored once.
+
+Other engines reference it.
+
+They never duplicate it.
+
+---
+
+## 2.2 Immutable Canon
+
+The Universe represents the reconstructed canonical world.
+
+User interactions never directly modify the Universe.
+
+Instead they modify the World State.
+
+---
+
+## 2.3 Separation of Concerns
+
+The Universe stores permanent information.
+
+The World State stores temporary information.
+
+Example
+
+Universe
+
+```
+Hermione
+
+Personality
+
+Speech Style
+
+Background
+```
+
+World State
+
+```
+Hermione
+
+Current Location
+
+Current Emotion
+
+Current Goal
+
+Inventory
+
+Current Action
+```
+
+---
+
+## 2.4 ID-Based References
+
+Every entity is referenced by ID.
+
+Never by name.
+
+Correct
+
+```
+char_harry
+```
+
+Incorrect
+
+```
+Harry Potter
+```
+
+Names can change.
+
+IDs never do.
+
+---
+
+## 2.5 No Duplicate Information
+
+Characters never duplicate location data.
+
+Objects never duplicate owner information.
+
+Relationships never duplicate character information.
+
+Everything references IDs.
+
+---
+
+## 2.6 Serializable
+
+Every Universe must be stored as JSON.
+
+No runtime objects.
+
+No Python-specific structures.
+
+No circular references.
+
+---
+
+## 2.7 Engine Independence
+
+Every engine consumes the same Universe.
+
+No engine defines additional schema fields.
+
+If new fields are required,
+
+the Universe Schema must evolve first.
+
+---
+
+# 3. Universe Object
+
+Every imported story becomes exactly one Universe.
+
+Structure
+
+```json
+{
+  "metadata": {},
+  "characters": [],
+  "locations": [],
+  "objects": [],
+  "relationships": [],
+  "timeline": [],
+  "world_rules": [],
+  "knowledge_graph": {},
+  "world_state": {}
+}
+```
+
+Field descriptions
+
+| Field | Type | Required | Description |
+|--------|------|----------|-------------|
+| metadata | Object | Yes | Story metadata |
+| characters | Array | Yes | Canonical character definitions |
+| locations | Array | Yes | World locations |
+| objects | Array | Yes | Physical objects |
+| relationships | Array | Yes | Character relationships |
+| timeline | Array | Yes | Canonical events |
+| world_rules | Array | Yes | Immutable universe rules |
+| knowledge_graph | Object | Yes | Entity graph |
+| world_state | Object | Yes | Initial world state |
+
+---
+
+# 4. Metadata Schema
+
+Metadata identifies the imported universe.
+
+Example
+
+```json
+{
+    "id":"hp_001",
+
+    "title":"Harry Potter and the Philosopher's Stone",
+
+    "author":"J. K. Rowling",
+
+    "source":"PDF",
+
+    "language":"English",
+
+    "genre":[
+        "Fantasy",
+        "Adventure"
+    ],
+
+    "created_at":"2026-08-01T09:15:00Z",
+
+    "schema_version":"1.0"
+}
+```
+
+Field descriptions
+
+### id
+
+Unique universe identifier.
+
+Must never change.
+
+Example
+
+```
+hp_001
+```
+
+---
+
+### title
+
+Original story title.
+
+---
+
+### author
+
+Story author.
+
+If unknown
+
+```
+Unknown
+```
+
+---
+
+### source
+
+Import source.
+
+Allowed values
+
+```
+PDF
+
+EPUB
+
+TXT
+
+Markdown
+
+AO3
+
+Wattpad
+
+Project Gutenberg
+
+Custom
+```
+
+---
+
+### language
+
+ISO language.
+
+Example
+
+```
+English
+```
+
+---
+
+### genre
+
+Array of genres.
+
+Example
+
+```json
+[
+    "Fantasy",
+    "Adventure"
+]
+```
+
+---
+
+### created_at
+
+UTC timestamp.
+
+Never local time.
+
+---
+
+### schema_version
+
+Current Universe Schema version.
+
+Example
+
+```
+1.0
+```
+
+---
+
+# 5. Entity Model
+
+Every entity inside the Universe follows the same rules.
+
+Every entity must contain
+
+```json
+{
+    "id":"",
+    "name":"",
+    "metadata":{}
+}
+```
+
+The remaining fields depend on entity type.
+
+---
+
+## Shared Metadata
+
+Every entity metadata object contains
+
+```json
+{
+    "first_appearance":"",
+
+    "last_appearance":"",
+
+    "importance":0,
+
+    "confidence":1.0
+}
+```
+
+### first_appearance
+
+Chapter or event where the entity first appears.
+
+---
+
+### last_appearance
+
+Latest appearance in canon.
+
+---
+
+### importance
+
+Relative importance.
+
+Range
+
+```
+1–100
+```
+
+---
+
+### confidence
+
+Extraction confidence.
+
+Range
+
+```
+0.0–1.0
+```
+
+Universe Builder assigns this.
+
+Other engines ignore it.
+
+---
+
+# 6. Character Schema
+
+Every fictional character is represented exactly once.
+
+Characters are **canonical definitions**, not live instances.
+
+Their mutable properties belong in World State.
+
+Example
+
+```json
+{
+    "id":"char_hermione",
+
+    "name":"Hermione Granger",
+
+    "aliases":[
+        "Hermione"
+    ],
+
+    "description":"A brilliant Hogwarts student.",
+
+    "personality":{},
+
+    "speech":{},
+
+    "goals":[],
+
+    "morality":{},
+
+    "abilities":[],
+
+    "knowledge_scope":[],
+
+    "metadata":{}
+}
+```
+
+A Character stores who they are.
+
+Not what they are doing.
+---
+
+## Character Fields
+
+### id
+
+Unique character identifier.
+
+Must remain constant for the lifetime of the universe.
+
+Format
+
+```
+char_<name>
+```
+
+Examples
+
+```
+char_harry
+
+char_hermione
+
+char_gandalf
+
+char_eren
+```
+
+---
+
+### name
+
+Canonical character name.
+
+Example
+
+```
+Hermione Granger
+```
+
+---
+
+### aliases
+
+Alternative names.
+
+Example
+
+```json
+[
+    "Hermione",
+    "Miss Granger"
+]
+```
+
+Useful for entity resolution.
+
+---
+
+### description
+
+A concise canonical description.
+
+Example
+
+```
+Brilliant witch and one of Harry Potter's closest friends.
+```
+
+This should describe the character,
+
+not narrate events.
+
+---
+
+# 6.1 Personality
+
+Personality is immutable.
+
+Experiences influence emotions,
+
+not personality.
+
+Structure
+
+```json
+{
+    "traits":[],
+    "strengths":[],
+    "weaknesses":[],
+    "fears":[],
+    "values":[],
+    "temperament":"",
+    "humor":"",
+    "confidence":""
+}
+```
+
+---
+
+## Traits
+
+Core personality traits.
+
+Example
+
+```json
+[
+    "Intelligent",
+    "Curious",
+    "Brave",
+    "Compassionate"
+]
+```
+
+---
+
+## Strengths
+
+Natural strengths.
+
+Example
+
+```json
+[
+    "Problem Solving",
+    "Leadership",
+    "Research"
+]
+```
+
+---
+
+## Weaknesses
+
+Natural flaws.
+
+Example
+
+```json
+[
+    "Overthinking",
+    "Perfectionism"
+]
+```
+
+---
+
+## Fears
+
+Persistent fears.
+
+Example
+
+```json
+[
+    "Failure",
+    "Losing Friends"
+]
+```
+
+---
+
+## Values
+
+Core beliefs.
+
+Example
+
+```json
+[
+    "Justice",
+    "Knowledge",
+    "Friendship"
+]
+```
+
+---
+
+## Temperament
+
+Allowed examples
+
+```
+Calm
+
+Stoic
+
+Impulsive
+
+Aggressive
+
+Reserved
+
+Cheerful
+
+Serious
+```
+
+---
+
+## Humor
+
+General humor style.
+
+Examples
+
+```
+Dry
+
+Sarcastic
+
+Playful
+
+None
+```
+
+---
+
+## Confidence
+
+General self-confidence.
+
+Examples
+
+```
+Low
+
+Medium
+
+High
+```
+
+---
+
+# 6.2 Speech Schema
+
+Speech remains mostly constant.
+
+Current emotions influence delivery,
+
+not speaking style.
+
+Structure
+
+```json
+{
+    "tone":"",
+    "vocabulary":"",
+    "sentence_length":"",
+    "formality":"",
+    "catchphrases":[],
+    "quirks":[]
+}
+```
+
+---
+
+### tone
+
+Examples
+
+```
+Academic
+
+Formal
+
+Friendly
+
+Blunt
+
+Cold
+
+Quiet
+
+Energetic
+```
+
+---
+
+### vocabulary
+
+Examples
+
+```
+Simple
+
+Average
+
+Advanced
+
+Technical
+```
+
+---
+
+### sentence_length
+
+Examples
+
+```
+Short
+
+Medium
+
+Long
+```
+
+---
+
+### formality
+
+Examples
+
+```
+Formal
+
+Neutral
+
+Informal
+```
+
+---
+
+### catchphrases
+
+Example
+
+```json
+[
+    "Honestly...",
+    "Obviously..."
+]
+```
+
+Optional.
+
+---
+
+### quirks
+
+Examples
+
+```json
+[
+    "Uses metaphors",
+    "Quotes books",
+    "Rarely contracts words"
+]
+```
+
+---
+
+# 6.3 Goals
+
+Goals represent long-term motivations.
+
+They are not current tasks.
+
+Structure
+
+```json
+[
+    {
+        "id":"",
+        "title":"",
+        "priority":1
+    }
+]
+```
+
+Example
+
+```json
+[
+    {
+        "id":"goal_stop_voldemort",
+        "title":"Defeat Voldemort",
+        "priority":100
+    }
+]
+```
+
+---
+
+# 6.4 Morality
+
+Structure
+
+```json
+{
+    "alignment":"",
+    "laws":[],
+    "taboos":[]
+}
+```
+
+---
+
+### alignment
+
+Examples
+
+```
+Lawful Good
+
+Neutral Good
+
+Chaotic Good
+
+Lawful Neutral
+
+True Neutral
+
+Chaotic Neutral
+
+Lawful Evil
+
+Neutral Evil
+
+Chaotic Evil
+```
+
+---
+
+### laws
+
+Personal rules the character follows.
+
+Example
+
+```json
+[
+    "Never abandon friends.",
+    "Never steal."
+]
+```
+
+---
+
+### taboos
+
+Actions the character refuses to perform.
+
+Example
+
+```json
+[
+    "Kill innocent people"
+]
+```
+
+---
+
+# 6.5 Abilities
+
+Structure
+
+```json
+[
+    {
+        "id":"",
+        "name":"",
+        "description":""
+    }
+]
+```
+
+Example
+
+```json
+[
+    {
+        "id":"spell_expelliarmus",
+        "name":"Expelliarmus",
+        "description":"Disarming Charm"
+    }
+]
+```
+
+Abilities define capability.
+
+Whether the character can currently use an ability depends on World State.
+
+---
+
+# 6.6 Knowledge Scope
+
+Defines what the character is capable of knowing.
+
+This is NOT the character's current memories.
+
+Example
+
+```json
+[
+    "Magic",
+
+    "Hogwarts",
+
+    "Potions",
+
+    "Friends"
+]
+```
+
+The Character Engine may only reason within this scope.
+
+---
+
+# 6.7 Character Validation
+
+Every Character must satisfy
+
+✓ Unique ID
+
+✓ Name exists
+
+✓ Personality exists
+
+✓ Speech exists
+
+✓ Goals array exists
+
+✓ Morality exists
+
+✓ Metadata exists
+
+✓ No duplicate abilities
+
+✓ No duplicate aliases
+
+✓ No invalid references
+
+Invalid characters are rejected during Universe validation.
+
+---
+
+# Character Philosophy
+
+Characters are canonical definitions.
+
+They should answer the question
+
+> "Who is this person?"
+
+They should never answer
+
+> "Where are they right now?"
+
+Current location,
+
+emotion,
+
+inventory,
+
+relationships,
+
+current memories,
+
+current goals,
+
+current actions,
+
+and health
+
+belong exclusively to the World State.
+
+This separation allows the same Character definition to persist while the simulated world evolves independently.
+---
+
+# 7. Location Schema
+
+Locations define every explorable place inside the universe.
+
+Locations are immutable definitions.
+
+The World State determines who is currently inside them.
+
+Structure
+
+```json
+{
+    "id":"",
+
+    "name":"",
+
+    "description":"",
+
+    "type":"",
+
+    "connected_locations":[],
+
+    "objects":[],
+
+    "metadata":{}
+}
+```
+
+---
+
+## id
+
+Unique location identifier.
+
+Format
+
+```
+loc_<name>
+```
+
+Examples
+
+```
+loc_great_hall
+
+loc_library
+
+loc_hogsmeade
+```
+
+---
+
+## name
+
+Canonical location name.
+
+Example
+
+```
+Great Hall
+```
+
+---
+
+## description
+
+Permanent description.
+
+Example
+
+```
+A vast dining hall beneath an enchanted ceiling.
+```
+
+Descriptions should not include temporary information.
+
+Incorrect
+
+```
+Harry is sitting here.
+```
+
+Correct
+
+```
+The main dining hall of Hogwarts.
+```
+
+---
+
+## type
+
+Examples
+
+```
+Building
+
+Room
+
+City
+
+Village
+
+Forest
+
+Castle
+
+Dungeon
+
+Planet
+
+Spacecraft
+```
+
+---
+
+## connected_locations
+
+Defines navigable paths.
+
+Example
+
+```json
+[
+    "loc_library",
+    "loc_corridor",
+    "loc_staircase"
+]
+```
+
+Simulation uses these connections for movement.
+
+---
+
+## objects
+
+Canonical objects belonging to this location.
+
+Example
+
+```json
+[
+    "obj_sorting_hat",
+    "obj_teacher_table"
+]
+```
+
+Ownership is handled by World State.
+
+---
+
+## Location Validation
+
+Every location must satisfy
+
+✓ Unique ID
+
+✓ Name exists
+
+✓ Description exists
+
+✓ Every connected location exists
+
+✓ No duplicate connections
+
+✓ No circular self references
+
+---
+
+# 8. Object Schema
+
+Objects represent physical entities.
+
+Everything that can exist in the world should be represented here.
+
+Structure
+
+```json
+{
+    "id":"",
+
+    "name":"",
+
+    "type":"",
+
+    "description":"",
+
+    "properties":{},
+
+    "metadata":{}
+}
+```
+
+---
+
+## id
+
+Format
+
+```
+obj_<name>
+```
+
+Example
+
+```
+obj_elder_wand
+
+obj_sorting_hat
+
+obj_ring
+```
+
+---
+
+## type
+
+Examples
+
+```
+Weapon
+
+Book
+
+Artifact
+
+Potion
+
+Furniture
+
+Food
+
+Clothing
+
+Tool
+
+Key
+
+Treasure
+```
+
+---
+
+## description
+
+Permanent description.
+
+Example
+
+```
+A legendary wand made from elder wood.
+```
+
+---
+
+## properties
+
+Additional immutable attributes.
+
+Example
+
+```json
+{
+    "material":"Wood",
+
+    "rarity":"Legendary",
+
+    "magic":true
+}
+```
+
+These never change.
+
+Current condition belongs in World State.
+
+---
+
+## Object Validation
+
+✓ Unique ID
+
+✓ Name exists
+
+✓ Valid type
+
+✓ Properties serializable
+
+✓ Metadata exists
+
+---
+
+# 9. Relationship Schema
+
+Relationships connect entities.
+
+Relationships are stored separately instead of inside Character objects.
+
+This prevents duplicated data.
+
+Structure
+
+```json
+{
+    "id":"",
+
+    "source":"",
+
+    "target":"",
+
+    "relationship_type":"",
+
+    "strength":0,
+
+    "metadata":{}
+}
+```
+
+---
+
+## id
+
+Format
+
+```
+rel_<source>_<target>
+```
+
+Example
+
+```
+rel_harry_hermione
+```
+
+---
+
+## source
+
+Entity ID.
+
+Usually a character.
+
+---
+
+## target
+
+Entity ID.
+
+Usually another character.
+
+---
+
+## relationship_type
+
+Examples
+
+```
+Friend
+
+Enemy
+
+Sibling
+
+Teacher
+
+Student
+
+Parent
+
+Mentor
+
+Ally
+
+Rival
+```
+
+---
+
+## strength
+
+Initial relationship strength.
+
+Range
+
+```
+0–100
+```
+
+Example
+
+```
+92
+```
+
+Relationship Engine modifies this value during gameplay.
+
+---
+
+## Relationship Validation
+
+✓ Source exists
+
+✓ Target exists
+
+✓ No self relationships
+
+✓ Valid type
+
+✓ Strength between 0 and 100
+
+---
+
+# 10. Timeline Schema
+
+The Timeline stores canonical events.
+
+Events are ordered chronologically.
+
+Structure
+
+```json
+{
+    "id":"",
+
+    "title":"",
+
+    "description":"",
+
+    "participants":[],
+
+    "location":"",
+
+    "sequence":0,
+
+    "metadata":{}
+}
+```
+
+---
+
+## id
+
+Format
+
+```
+evt_<name>
+```
+
+Example
+
+```
+evt_sorting
+
+evt_troll_attack
+
+evt_final_battle
+```
+
+---
+
+## title
+
+Human-readable event name.
+
+Example
+
+```
+Sorting Ceremony
+```
+
+---
+
+## description
+
+Brief summary.
+
+Example
+
+```
+First-year students are sorted into their Hogwarts houses.
+```
+
+---
+
+## participants
+
+Example
+
+```json
+[
+    "char_harry",
+    "char_hermione",
+    "char_ron"
+]
+```
+
+---
+
+## location
+
+Location ID.
+
+Example
+
+```
+loc_great_hall
+```
+
+---
+
+## sequence
+
+Canonical chronological order.
+
+Example
+
+```
+1
+
+2
+
+3
+
+4
+```
+
+Timeline Engine uses this ordering.
+
+---
+
+## Timeline Validation
+
+✓ Every participant exists
+
+✓ Location exists
+
+✓ Sequence unique
+
+✓ Timeline ordered
+
+✓ No duplicate events
+
+✓ Valid IDs
+
+---
+
+# Timeline Philosophy
+
+The Timeline records what originally happened in the story.
+
+It should never contain alternate events.
+
+Alternate histories belong in the World State and snapshots.
+
+The Timeline is the historical backbone of the universe.
+
+It answers
+
+> "What happened in canon?"
+
+not
+
+> "What happened during this playthrough?"
+---
+
+# 11. World Rules Schema
+
+World Rules define the immutable laws governing the fictional universe.
+
+Unlike timeline events, these rules are **always true** unless the source material explicitly changes them.
+
+Simulation Engine, Character Engine, and Interaction Engine must always respect these rules.
+
+Structure
+
+```json
+{
+    "id":"",
+
+    "title":"",
+
+    "description":"",
+
+    "category":"",
+
+    "immutable":true,
+
+    "metadata":{}
+}
+```
+
+---
+
+## id
+
+Format
+
+```
+rule_<name>
+```
+
+Examples
+
+```
+rule_magic_requires_wand
+
+rule_force_sensitive
+
+rule_pokemon_capture
+```
+
+---
+
+## title
+
+Human-readable rule name.
+
+Example
+
+```
+Magic Requires Magical Ability
+```
+
+---
+
+## description
+
+Explain the rule clearly.
+
+Example
+
+```
+Only witches and wizards possessing magical ability may naturally cast spells.
+```
+
+---
+
+## category
+
+Examples
+
+```
+Magic
+
+Physics
+
+Combat
+
+Politics
+
+Religion
+
+Technology
+
+Biology
+
+Social
+```
+
+---
+
+## immutable
+
+Always true for imported canon.
+
+Example
+
+```json
+true
+```
+
+Only the Universe Builder may create or remove world rules.
+
+---
+
+## Rule Validation
+
+Every rule must satisfy
+
+✓ Unique ID
+
+✓ Category exists
+
+✓ Description exists
+
+✓ Immutable field exists
+
+✓ No duplicate rules
+
+---
+
+# World Rule Philosophy
+
+Rules define **how the universe works**.
+
+Characters may violate laws.
+
+They cannot violate world rules.
+
+Example
+
+Harry can break school rules.
+
+Harry cannot suddenly breathe underwater unless canon permits it.
+
+---
+
+# 12. Knowledge Graph Schema
+
+The Knowledge Graph connects every entity in the universe.
+
+It is a structural representation used for reasoning, retrieval and navigation.
+
+Structure
+
+```json
+{
+    "nodes":[],
+    "edges":[]
+}
+```
+
+---
+
+## Node Schema
+
+```json
+{
+    "id":"",
+    "entity_type":"",
+    "label":""
+}
+```
+
+---
+
+### entity_type
+
+Allowed values
+
+```
+Character
+
+Location
+
+Object
+
+Event
+
+Rule
+```
+
+---
+
+## Edge Schema
+
+```json
+{
+    "source":"",
+
+    "target":"",
+
+    "relationship":""
+}
+```
+
+---
+
+### relationship
+
+Examples
+
+```
+Located In
+
+Owns
+
+Knows
+
+Friend Of
+
+Enemy Of
+
+Participated In
+
+Created
+
+Lives In
+
+Uses
+
+Protects
+```
+
+---
+
+## Example
+
+```text
+Harry
+
+↓
+
+Owns
+
+↓
+
+Nimbus 2000
+
+↓
+
+Stored In
+
+↓
+
+Dormitory
+```
+
+The graph should never duplicate information already stored elsewhere.
+
+It only represents connections.
+
+---
+
+# 13. World State Reference
+
+The Universe contains only the **initial** World State.
+
+All runtime changes are stored separately.
+
+See
+
+```
+docs/universe/09_world_state.md
+```
+
+Universe Builder creates the initial World State.
+
+After that point,
+
+all mutations occur within World State only.
+
+---
+
+# 14. ID Convention
+
+Every entity follows predictable naming.
+
+Character
+
+```
+char_harry
+```
+
+Location
+
+```
+loc_library
+```
+
+Object
+
+```
+obj_sorting_hat
+```
+
+Relationship
+
+```
+rel_harry_hermione
+```
+
+Event
+
+```
+evt_sorting
+```
+
+Rule
+
+```
+rule_magic
+```
+
+Memory
+
+```
+mem_001
+```
+
+Scene
+
+```
+scene_library
+```
+
+Universe
+
+```
+hp_001
+```
+
+IDs must
+
+✓ Be unique
+
+✓ Never change
+
+✓ Be human-readable
+
+Never use random UUIDs unless absolutely required.
+
+---
+
+# 15. Validation Rules
+
+Every generated Universe must pass validation before persistence.
+
+Validator checks
+
+### Metadata
+
+✓ Required fields exist
+
+✓ Valid schema version
+
+✓ Valid source
+
+---
+
+### Characters
+
+✓ Unique IDs
+
+✓ Personality exists
+
+✓ Speech exists
+
+✓ No duplicate aliases
+
+✓ Metadata exists
+
+---
+
+### Locations
+
+✓ Valid IDs
+
+✓ Valid connections
+
+✓ No self references
+
+---
+
+### Objects
+
+✓ Valid IDs
+
+✓ Valid properties
+
+✓ Serializable
+
+---
+
+### Relationships
+
+✓ Source exists
+
+✓ Target exists
+
+✓ Valid relationship type
+
+✓ Valid strength
+
+---
+
+### Timeline
+
+✓ Ordered
+
+✓ No duplicate sequence
+
+✓ Every participant exists
+
+✓ Every location exists
+
+---
+
+### Rules
+
+✓ Unique IDs
+
+✓ Valid categories
+
+✓ Immutable defined
+
+---
+
+### Knowledge Graph
+
+✓ All nodes valid
+
+✓ All edges valid
+
+✓ No dangling references
+
+---
+
+If any validation fails,
+
+Universe Builder must reject the Universe and report validation errors.
+
+Partial universes must never be stored.
+
+---
+
+# 16. Schema Versioning
+
+Universe Schema evolves over time.
+
+Example
+
+```
+Version 1.0
+
+Core schema
+
+↓
+
+Version 1.1
+
+Faction support
+
+↓
+
+Version 1.2
+
+Economy system
+
+↓
+
+Version 1.3
+
+Political system
+
+↓
+
+Version 2.0
+
+Major structural changes
+```
+
+Older universes should remain readable through migration.
+
+---
+
+# 17. Example Universe
+
+A simplified universe.
+
+```json
+{
+    "metadata":{
+        "id":"village_001",
+        "title":"Small Village",
+        "author":"Example",
+        "source":"Custom",
+        "schema_version":"1.0"
+    },
+
+    "characters":[
+        {
+            "id":"char_blacksmith",
+            "name":"Blacksmith"
+        },
+        {
+            "id":"char_merchant",
+            "name":"Merchant"
+        }
+    ],
+
+    "locations":[
+        {
+            "id":"loc_market",
+            "name":"Village Market"
+        }
+    ],
+
+    "objects":[
+        {
+            "id":"obj_sword",
+            "name":"Iron Sword"
+        }
+    ],
+
+    "relationships":[
+        {
+            "id":"rel_blacksmith_merchant",
+            "source":"char_blacksmith",
+            "target":"char_merchant",
+            "relationship_type":"Friend",
+            "strength":82
+        }
+    ],
+
+    "timeline":[
+        {
+            "id":"evt_market_day",
+            "title":"Market Day",
+            "sequence":1
+        }
+    ],
+
+    "world_rules":[
+        {
+            "id":"rule_no_magic",
+            "title":"Magic Does Not Exist"
+        }
+    ],
+
+    "knowledge_graph":{
+        "nodes":[],
+        "edges":[]
+    },
+
+    "world_state":{}
+}
+```
+
+This example demonstrates the expected structure.
+
+Large universes follow the exact same schema.
+
+---
+
+# 18. Summary
+
+The Universe Schema is the canonical specification for every Headcanon universe.
+
+It defines **what exists**, **how entities are represented**, and **how they relate to one another**, while remaining independent of runtime gameplay.
+
+The Universe is intentionally **mostly immutable**. User interactions never rewrite canon directly; instead, they operate on the separate World State.
+
+Every engine in Headcanon—Universe Builder, Character Engine, Simulation Engine, Timeline Engine, Scene Engine, Media Pipeline, and any future systems—must consume and produce data that conforms to this schema.
+
+Any change to the Universe Schema is an architectural change and must be versioned before implementation.

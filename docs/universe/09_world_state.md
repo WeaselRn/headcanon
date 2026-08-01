@@ -320,3 +320,505 @@ Snapshots are versioned and stored separately.
 - 15_snapshot_schema.md
 - ../engines/04_simulation_engine.md
 - ../engines/08_timeline_engine.md
+
+
+---
+
+# `docs/universe/09_world_state.md`
+
+## Goal
+
+This document defines the **live simulation state** of a universe.
+
+Think of it like this:
+
+```
+Universe
+    ↓
+Blueprint (mostly immutable)
+
+↓
+
+WorldState
+    ↓
+Current save file
+```
+
+The Universe defines **what exists**.
+
+The WorldState defines **what is happening right now.**
+
+---
+
+# Structure
+
+```text
+# World State
+
+Version
+
+Status
+
+Owner
+
+────────────────────────────
+
+1. Purpose
+
+2. Design Philosophy
+
+3. WorldState Object
+
+4. Time System
+
+5. Scene State
+
+6. Character State
+
+7. Location State
+
+8. Object State
+
+9. Active Events
+
+10. Pending Events
+
+11. Environmental State
+
+12. World Flags
+
+13. Save Format
+
+14. Update Rules
+
+15. State Lifecycle
+
+16. Example World State
+```
+
+---
+
+# 1. Purpose
+
+Explain
+
+> WorldState represents the current live simulation.
+
+Unlike Universe
+
+WorldState changes after almost every interaction.
+
+Example
+
+```
+Universe
+
+Hermione is intelligent.
+
+↓
+
+WorldState
+
+Hermione is currently in the Library,
+reading a book,
+slightly annoyed,
+holding an old diary.
+```
+
+---
+
+# 2. Design Philosophy
+
+Rules
+
+```
+Universe never changes.
+
+↓
+
+WorldState changes continuously.
+
+↓
+
+WorldState references Universe IDs.
+
+↓
+
+No duplicated immutable information.
+
+↓
+
+Everything must be serializable.
+
+↓
+
+Everything can be restored.
+```
+
+---
+
+# 3. WorldState Object
+
+Root JSON
+
+```json
+{
+    "time": {},
+    "scene": {},
+    "characters": {},
+    "locations": {},
+    "objects": {},
+    "relationships": {},
+    "events": {},
+    "environment": {},
+    "flags": {}
+}
+```
+
+Notice
+
+Characters is now
+
+```json
+{
+    "char_harry":{}
+}
+```
+
+not an array.
+
+Makes lookup O(1).
+
+---
+
+# 4. Time System
+
+Example
+
+```json
+{
+    "day":3,
+    "hour":15,
+    "minute":20,
+    "season":"Autumn",
+    "weather":"Rain",
+    "timeline_position":"evt_041"
+}
+```
+
+Every engine references this.
+
+Simulation advances it.
+
+---
+
+# 5. Scene State
+
+Current visible scene.
+
+Example
+
+```json
+{
+    "scene_id":"scene_library",
+    "location":"loc_library",
+    "visible_characters":[
+        "char_harry",
+        "char_hermione"
+    ],
+    "visible_objects":[
+        "obj_book"
+    ],
+    "available_actions":[]
+}
+```
+
+Frontend renders this directly.
+
+---
+
+# 6. Character State
+
+Do NOT duplicate Character schema.
+
+Only mutable values.
+
+Example
+
+```json
+{
+    "char_hermione":{
+        "location":"loc_library",
+        "emotion":"Focused",
+        "health":"Healthy",
+        "inventory":[
+            "obj_book"
+        ],
+        "current_goal":"Research",
+        "active_memories":[
+            "mem_031"
+        ],
+        "current_action":"Reading"
+    }
+}
+```
+
+Everything here can change.
+
+---
+
+# 7. Location State
+
+Example
+
+```json
+{
+    "loc_library":{
+        "occupants":[
+            "char_harry",
+            "char_hermione"
+        ],
+        "objects":[
+            "obj_book"
+        ],
+        "status":"Open"
+    }
+}
+```
+
+---
+
+# 8. Object State
+
+Example
+
+```json
+{
+    "obj_book":{
+        "owner":"char_hermione",
+        "location":"loc_library",
+        "condition":"Good",
+        "hidden":false
+    }
+}
+```
+
+---
+
+# 9. Active Events
+
+Events currently occurring.
+
+Example
+
+```json
+[
+    {
+        "id":"evt_library",
+        "status":"active",
+        "participants":[]
+    }
+]
+```
+
+---
+
+# 10. Pending Events
+
+Future scheduled events.
+
+Example
+
+```
+Dinner
+
+↓
+
+Starts
+
+↓
+
+18:00
+```
+
+Simulation checks these.
+
+---
+
+# 11. Environment
+
+Example
+
+```json
+{
+    "weather":"Rain",
+    "temperature":17,
+    "lighting":"Dim",
+    "noise":"Quiet"
+}
+```
+
+---
+
+# 12. World Flags
+
+Very useful.
+
+Example
+
+```json
+{
+    "quest_started":true,
+    "door_open":false,
+    "dragon_dead":true
+}
+```
+
+Flags are simple booleans or enums.
+
+---
+
+# 13. Save Format
+
+WorldState stored as
+
+```
+world_state.json
+```
+
+Snapshots
+
+```
+snapshot_001.json
+
+snapshot_002.json
+
+snapshot_003.json
+```
+
+Universe never duplicated.
+
+---
+
+# 14. Update Rules
+
+Very important.
+
+Example
+
+```
+Character Engine
+
+updates
+
+emotion
+
+knowledge
+
+↓
+
+Simulation Engine
+
+updates
+
+location
+
+inventory
+
+events
+
+↓
+
+Relationship Engine
+
+updates
+
+trust
+
+respect
+
+↓
+
+Timeline Engine
+
+updates
+
+time
+```
+
+Each engine owns specific fields.
+
+---
+
+# 15. State Lifecycle
+
+Document
+
+```
+User Action
+
+↓
+
+Character Response
+
+↓
+
+Simulation
+
+↓
+
+Memory Update
+
+↓
+
+Relationship Update
+
+↓
+
+Timeline Advance
+
+↓
+
+Persist WorldState
+
+↓
+
+Generate Scene
+```
+
+Exactly this order.
+
+---
+
+# 16. Example WorldState
+
+A complete small example.
+
+```
+Village
+
+↓
+
+Morning
+
+↓
+
+Hero in Tavern
+
+↓
+
+Merchant nearby
+
+↓
+
+Sword on table
+
+↓
+
+Quest active
+```
+
+Show the full JSON.
+
+---
+
