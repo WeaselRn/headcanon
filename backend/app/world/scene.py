@@ -1,0 +1,179 @@
+"""
+Scene data models for Headcanon.
+
+A Scene represents the user's current view of the universe.  It is the
+primary data structure exchanged between the backend and frontend during
+gameplay.
+
+Rather than exposing the complete World State, the backend generates a Scene
+containing only the information relevant to the user's current location and
+context.  Every user interaction results in a refreshed Scene.
+
+Reference: docs/universe/12_scene.md
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+# ---------------------------------------------------------------------------
+# Sub-models
+# ---------------------------------------------------------------------------
+
+
+class SceneLocationSummary(BaseModel, frozen=True):
+    """
+    A lightweight summary of the current location included in the scene.
+
+    Does not duplicate all location data — includes only what the frontend
+    needs to render the current scene.
+
+    Attributes:
+        location_id:         Full location ID.
+        name:                Canonical location name.
+        description:         Permanent description (used as scene flavour text).
+        parent_location:     Parent location ID, if any.
+        connected_locations: IDs of navigable adjacent locations.
+    """
+
+    location_id: str
+    name: str
+    description: str = ""
+    parent_location: str | None = None
+    connected_locations: list[str] = Field(default_factory=list)
+
+
+class SceneCharacterSummary(BaseModel, frozen=True):
+    """
+    A lightweight summary of a visible character.
+
+    Includes only the details required to render the scene — full character
+    data is not duplicated here.
+
+    Attributes:
+        character_id:             Character ID.
+        name:                     Canonical name for display.
+        current_emotion:          Current emotion label.
+        current_activity:         Short description of what the character is doing.
+        interaction_available:    Whether the user can currently interact.
+    """
+
+    character_id: str
+    name: str
+    current_emotion: str | None = None
+    current_activity: str | None = None
+    interaction_available: bool = True
+
+
+class SceneObjectSummary(BaseModel, frozen=True):
+    """
+    A lightweight summary of a visible interactive object.
+
+    Attributes:
+        object_id:           Object ID.
+        name:                Canonical name for display.
+        category:            Object category label.
+        current_state:       Key/value pairs describing the object's current state.
+        interaction_options: Actions the user can perform on this object.
+    """
+
+    object_id: str
+    name: str
+    category: str | None = None
+    current_state: dict[str, bool | int | float | str] = Field(default_factory=dict)
+    interaction_options: list[str] = Field(default_factory=list)
+
+
+class SceneEnvironment(BaseModel, frozen=True):
+    """
+    Environmental context for the current scene.
+
+    Attributes:
+        time_of_day:         Time descriptor (e.g. ``"Morning"``).
+        weather:             Weather description (e.g. ``"Sunny"``).
+        lighting:            Lighting quality (e.g. ``"Bright"``).
+        ambient_description: One-line atmospheric description.
+    """
+
+    time_of_day: str | None = None
+    weather: str | None = None
+    lighting: str | None = None
+    ambient_description: str | None = None
+
+
+class SceneMediaAssets(BaseModel, frozen=True):
+    """
+    Optional media assets generated for the scene.
+
+    Media generation must never block scene creation.
+
+    Attributes:
+        illustration_url:   URL of the generated scene illustration.
+        narration_audio_url: URL of the generated narration audio.
+        ambient_audio_url:   URL of ambient audio.
+    """
+
+    illustration_url: str | None = None
+    narration_audio_url: str | None = None
+    ambient_audio_url: str | None = None
+
+
+class SceneMetadata(BaseModel, frozen=True):
+    """
+    Version and synchronisation metadata attached to every scene.
+
+    Attributes:
+        scene_version:       Monotonically increasing scene revision counter.
+        world_state_version: Version string of the World State at generation time.
+        snapshot_id:         ID of the snapshot that corresponds to this scene.
+        generation_timestamp: UTC datetime when the scene was generated.
+    """
+
+    scene_version: int = Field(default=1, ge=1)
+    world_state_version: str | None = None
+    snapshot_id: str | None = None
+    generation_timestamp: datetime | None = None
+
+
+# ---------------------------------------------------------------------------
+# Root model
+# ---------------------------------------------------------------------------
+
+
+class Scene(BaseModel, frozen=True):
+    """
+    The current view of the universe delivered to the frontend.
+
+    Scenes are generated by the Scene Engine on every user interaction,
+    travel, significant event, or simulation update.  The frontend should
+    replace the previous scene rather than patch individual elements.
+
+    ID convention: ``scene_<location>``  (e.g. ``scene_library``).
+
+    Attributes:
+        scene_id:          Unique identifier for this scene instance.
+        universe_id:       ID of the parent universe.
+        timestamp:         In-universe abstract time string (e.g. ``"Day 3, Morning"``).
+        location:          Summary of the current location.
+        narration:         Descriptive narration of the current scene.
+        characters:        Visible characters in the scene.
+        objects:           Visible interactive objects.
+        available_actions: Actions currently available to the user.
+        environment:       Environmental context.
+        media:             Optional generated media assets.
+        metadata:          Version and synchronisation metadata.
+    """
+
+    scene_id: str = Field(min_length=1)
+    universe_id: str = Field(min_length=1)
+    timestamp: str | None = None
+    location: SceneLocationSummary
+    narration: str = ""
+    characters: list[SceneCharacterSummary] = Field(default_factory=list)
+    objects: list[SceneObjectSummary] = Field(default_factory=list)
+    available_actions: list[str] = Field(default_factory=list)
+    environment: SceneEnvironment = Field(default_factory=SceneEnvironment)
+    media: SceneMediaAssets = Field(default_factory=SceneMediaAssets)
+    metadata: SceneMetadata = Field(default_factory=SceneMetadata)
