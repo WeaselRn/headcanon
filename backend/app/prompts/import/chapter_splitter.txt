@@ -1,0 +1,23 @@
+03_chapter_splitter.txt
+
+Purpose
+
+Convert one huge story into logical chunks.
+
+Output
+
+{
+    "chapters":[
+        {
+            "chapter":1,
+            "title":"",
+            "text":""
+        }
+    ]
+}
+
+No summaries.
+
+No rewriting.
+
+Simply identify boundaries.

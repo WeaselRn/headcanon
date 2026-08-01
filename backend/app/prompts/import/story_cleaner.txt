@@ -1,0 +1,29 @@
+Purpose
+
+Raw text
+↓
+
+Remove extraction artifacts
+
+↓
+
+Produce clean story text
+
+Responsibilities
+
+remove page numbers
+remove headers/footers
+remove duplicated lines
+preserve dialogue
+preserve paragraph breaks
+preserve chapter titles
+preserve formatting that affects meaning
+never summarize
+never rewrite
+never censor
+
+Expected Output
+
+{
+    "clean_story":"..."
+}

@@ -1,0 +1,24 @@
+Purpose
+
+Extract information about the story before universe reconstruction.
+
+Output
+
+{
+    "title":"",
+    "author":"",
+    "language":"",
+    "genre":[],
+    "setting":"",
+    "estimated_time_period":"",
+    "major_characters":[],
+    "major_locations":[],
+    "chapter_count":0,
+    "summary":""
+}
+
+Notice
+
+The summary is only for displaying in the UI.
+
+Universe Builder should NEVER use it.
