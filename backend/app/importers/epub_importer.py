@@ -11,9 +11,14 @@ import io
 import os
 import zipfile
 
-import ebooklib
+try:
+    import ebooklib
+    from ebooklib import epub
+except ImportError:
+    ebooklib = None  # type: ignore[assignment]
+    epub = None  # type: ignore[assignment]
+
 from bs4 import BeautifulSoup
-from ebooklib import epub
 
 from app.importers.base import BaseStoryImporter
 from app.importers.exceptions import (
@@ -59,6 +64,10 @@ class EPUBImporter(BaseStoryImporter):
 
     def load(self, source: str | io.BytesIO | bytes) -> epub.EpubBook:
         """Load and parse EPUB using ebooklib."""
+        if epub is None:
+            raise UnsupportedFormatError(
+                "ebooklib package is not installed. Please install ebooklib to import EPUB files."
+            )
         opts = {"ignore_ncx": True}
         try:
             if isinstance(source, (str, os.PathLike)):

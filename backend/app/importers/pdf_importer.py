@@ -12,7 +12,10 @@ import os
 import re
 from typing import Any
 
-from pypdf import PdfReader
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None  # type: ignore[assignment,misc]
 
 from app.importers.base import BaseStoryImporter
 from app.importers.exceptions import (
@@ -71,6 +74,10 @@ class PDFImporter(BaseStoryImporter):
 
     def load(self, source: str | os.PathLike | bytes) -> PdfReader:
         """Load and parse the PDF with pypdf."""
+        if PdfReader is None:
+            raise UnsupportedFormatError(
+                "pypdf package is not installed. Please install pypdf to import PDF files."
+            )
         try:
             if isinstance(source, (str, os.PathLike)):
                 with open(str(source), "rb") as f:

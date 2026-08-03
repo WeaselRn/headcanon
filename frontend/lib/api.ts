@@ -49,10 +49,13 @@ export async function getUniverse(
  * List all available persistent universes.
  */
 export async function listUniverses(): Promise<UniverseMetadataResponse[]> {
-  const res = await apiClient.get<{ universes: UniverseMetadataResponse[] }>(
-    "/api/universes"
-  );
-  return res.data.universes || [];
+  const res = await apiClient.get<
+    { universes: UniverseMetadataResponse[] } | UniverseMetadataResponse[]
+  >("/api/universes");
+  if (Array.isArray(res.data)) {
+    return res.data;
+  }
+  return res.data?.universes || [];
 }
 
 /**

@@ -1,8 +1,14 @@
 import logging
 from typing import Any
 
-import boto3
-from botocore.exceptions import ClientError
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+except ImportError:
+    boto3 = None  # type: ignore[assignment]
+
+    class ClientError(Exception):  # type: ignore[no-redef]
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +24,10 @@ class BackblazeClient:
     @property
     def s3_client(self) -> Any:
         if self._s3_client is None:
+            if boto3 is None:
+                raise RuntimeError(
+                    "boto3 package is not installed. Please install boto3 to perform Backblaze S3 operations."
+                )
             endpoint_url = (
                 self.endpoint
                 if self.endpoint.startswith(("http://", "https://"))
