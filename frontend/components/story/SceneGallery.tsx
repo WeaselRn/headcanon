@@ -8,37 +8,32 @@ interface Props {
 export default function SceneGallery({ scenes }: Props) {
   if (scenes.length === 0) {
     return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">No scenes yet.</p>
+      <p className="text-sm text-slate-500">No scenes yet.</p>
     );
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {scenes.map((scene) => (
+      {scenes.map((scene, idx) => (
         <div
-          key={scene.scene_number}
-          className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+          key={scene.scene_id || idx}
+          className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900"
         >
-          <div className="relative h-48 w-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="relative h-48 w-full bg-slate-950">
             <Image
-              src={scene.image_url || "/placeholder.png"}
-              alt={scene.title}
+              src={scene.media?.illustration_url || "/placeholder.png"}
+              alt={scene.location?.name || "Scene"}
               fill
               className="object-cover"
             />
           </div>
           <div className="p-3">
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              Scene {scene.scene_number}
+            <p className="text-xs font-medium text-slate-400">
+              {scene.location?.name || `Scene ${idx + 1}`}
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              {scene.title}
+            <p className="mt-1 text-xs text-slate-300 line-clamp-2">
+              {scene.narration}
             </p>
-            {scene.description && (
-              <p className="mt-1 text-xs text-zinc-600 line-clamp-2 dark:text-zinc-400">
-                {scene.description}
-              </p>
-            )}
           </div>
         </div>
       ))}

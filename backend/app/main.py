@@ -1,3 +1,9 @@
+"""
+Headcanon FastAPI Application Main Entry Point.
+
+Reference: docs/runtime_pipeline.md, docs/error_handling.md
+"""
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -11,20 +17,28 @@ settings = get_settings()
 configure_logging(debug=settings.debug)
 
 app = FastAPI(
-    title=settings.app_name,
+    title="Headcanon Engine API",
     version=settings.app_version,
-    description="Headcanon — personalized multimedia story generation API.",
+    description=(
+        "Persistent Fictional Universe Simulation Engine API. Reconstructs universes, "
+        "simulates world state evolution, manages character reasoning, and generates "
+        "explorable scenes and multimedia assets."
+    ),
+    openapi_url="/api/openapi.json",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
 )
 
-# Health check is at /health (outside /api base URL)
+# Health check endpoint
 app.include_router(health_router)
 
-# All story endpoints live under /api
+# Main API router (/api/...)
 app.include_router(api_router)
 
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Handle explicit HTTP exceptions without exposing internal details."""
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": str(exc.detail)},
@@ -35,15 +49,17 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
+    """Handle request schema validation errors cleanly."""
     return JSONResponse(
         status_code=422,
-        content={"error": str(exc)},
+        content={"error": "Validation Error", "detail": str(exc)},
     )
 
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all exception handler preventing stack trace leaks."""
     return JSONResponse(
         status_code=500,
-        content={"error": str(exc)},
+        content={"error": "Internal Server Error"},
     )

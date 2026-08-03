@@ -1,30 +1,41 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { Compass, Plus, Image as ImageIcon, Settings } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         <Link
           href="/"
-          className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-50"
+          className="flex items-center gap-2 text-base font-bold text-slate-50 hover:text-purple-300 transition-colors"
         >
-          <BookOpen className="h-5 w-5" />
+          <Compass className="h-5 w-5 text-purple-400" />
           <span>Headcanon</span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <nav className="flex items-center gap-6 text-xs font-semibold text-slate-300">
           <Link
-            href="/stories"
-            className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-50"
+            href="/library"
+            className="flex items-center gap-1.5 transition-colors hover:text-purple-300"
           >
-            Library
+            <ImageIcon className="h-4 w-4 text-amber-400" />
+            Media Library
           </Link>
+
           <Link
-            href="/generate"
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            href="/settings"
+            className="flex items-center gap-1.5 transition-colors hover:text-purple-300"
           >
-            Create Story
+            <Settings className="h-4 w-4 text-slate-400" />
+            Settings
+          </Link>
+
+          <Link
+            href="/import"
+            className="flex items-center gap-1.5 rounded-xl bg-purple-600 px-3.5 py-1.5 font-semibold text-white transition-colors hover:bg-purple-500 shadow-md"
+          >
+            <Plus className="h-4 w-4" />
+            Import Universe
           </Link>
         </nav>
       </div>
