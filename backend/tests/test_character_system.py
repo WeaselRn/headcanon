@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Any
 
 import pytest
 
@@ -29,10 +28,16 @@ from app.world.character import (
     SpeechTone,
 )
 from app.world.location import Location, LocationCategory
-from app.world.memory import Memory, MemoryType
+from app.world.memory import Memory
 from app.world.relationship import Relationship, RelationshipScores, RelationshipType
-from app.world.timeline import Timeline, TimelineEvent, WorldTime
-from app.world.universe import ImportSource, Universe, UniverseMetadata, WorldRule, WorldRuleCategory
+from app.world.timeline import WorldTime
+from app.world.universe import (
+    ImportSource,
+    Universe,
+    UniverseMetadata,
+    WorldRule,
+    WorldRuleCategory,
+)
 from app.world.world_state import CharacterState, LocationState, WorldState
 
 
@@ -202,8 +207,12 @@ class TestMemoryEngine:
 
     def test_apply_decay_filter(self):
         engine = MemoryEngine()
-        m_high = Memory(id="mem_high", character_id="c1", summary="Core event", importance=80, timestamp=NOW)
-        m_low = Memory(id="mem_low", character_id="c1", summary="Passed in hall", importance=10, timestamp=NOW)
+        m_high = Memory(
+            id="mem_high", character_id="c1", summary="Core event", importance=80, timestamp=NOW
+        )
+        m_low = Memory(
+            id="mem_low", character_id="c1", summary="Passed in hall", importance=10, timestamp=NOW
+        )
 
         filtered = engine.apply_decay_filter([m_high, m_low], min_importance=20)
         assert len(filtered) == 1

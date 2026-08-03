@@ -3,7 +3,7 @@ import { Scene } from "./scene";
 export interface ParsedAction {
   action_type: string;
   target_id?: string | null;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   raw_input: string;
 }
 
@@ -14,7 +14,7 @@ export interface InteractionResult {
   narration: string;
   character_dialogue?: Record<string, string> | null;
   scene: Scene;
-  pending_world_effects: Record<string, any>[];
+  pending_world_effects: Record<string, unknown>[];
   success: boolean;
   error_message?: string | null;
 }

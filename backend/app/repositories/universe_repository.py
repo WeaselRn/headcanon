@@ -7,12 +7,12 @@ Universe models on disk using Pydantic v2 serialization.
 
 from __future__ import annotations
 
+import builtins
 import json
 import logging
 import os
 import shutil
 from pathlib import Path
-from typing import List
 
 from pydantic import ValidationError
 
@@ -153,7 +153,7 @@ class UniverseRepository:
         shutil.rmtree(universe_dir)
         logger.info("Deleted Universe '%s' from %s", universe_id, universe_dir)
 
-    def list(self) -> List[str]:
+    def list(self) -> builtins.list[str]:
         """
         Return a list of all saved universe IDs.
 
@@ -163,20 +163,20 @@ class UniverseRepository:
         if not self.universes_dir.exists():
             return []
 
-        ids: List[str] = []
+        ids: list[str] = []
         for item in self.universes_dir.iterdir():
             if item.is_dir() and (item / "universe.json").exists():
                 ids.append(item.name)
         return sorted(ids)
 
-    def list_metadata(self) -> List[UniverseMetadata]:
+    def list_metadata(self) -> builtins.list[UniverseMetadata]:
         """
         Return a list of UniverseMetadata objects for all saved universes.
 
         Returns:
             List of UniverseMetadata models.
         """
-        metadata_list: List[UniverseMetadata] = []
+        metadata_list: list[UniverseMetadata] = []
         for uid in self.list():
             meta_file = self._get_metadata_file(uid)
             if meta_file.exists():

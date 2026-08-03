@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { History, GitCommit } from "lucide-react";
+import { History } from "lucide-react";
 import type { InteractionResult } from "@/types/interaction";
 
 interface TimelineViewProps {

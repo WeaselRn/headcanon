@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Settings as SettingsIcon, Save, Volume2, Eye, Shield, Cpu } from "lucide-react";
+import { Settings as SettingsIcon, Save, Volume2, Eye, Cpu } from "lucide-react";
 
 export default function SettingsPage() {
   const [apiUrl, setApiUrl] = useState(

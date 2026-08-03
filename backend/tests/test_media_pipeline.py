@@ -14,10 +14,7 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock
 
-import pytest
-
 from app.engines.media_pipeline import (
-    AmbientAudioMetadata,
     MediaPipeline,
     MediaPipelineResult,
 )
@@ -111,7 +108,8 @@ class TestNarrationEngine:
         scene = create_sample_scene()
 
         res = engine.generate_narration(scene)
-        assert res.narration_text == "Sunlight streams across dusty bookshelves as Hermione studies."
+        expected_narration = "Sunlight streams across dusty bookshelves as Hermione studies."
+        assert res.narration_text == expected_narration
         assert res.atmosphere == "Studious"
         assert "sight" in res.sensory_details
 

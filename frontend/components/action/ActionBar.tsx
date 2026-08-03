@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, FormEvent } from "react";
-import { Send, MessageSquare, Eye, Navigation, Search, Clock, Package } from "lucide-react";
+import { Send, MessageSquare, Eye, Search, Clock } from "lucide-react";
 
 interface ActionBarProps {
   onExecuteAction: (userInput: string) => void;

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Map, MapPin, Lock } from "lucide-react";
+import { Map, MapPin } from "lucide-react";
 import type { SceneLocationSummary } from "@/types/scene";
 
 interface WorldMapProps {

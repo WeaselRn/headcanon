@@ -3,7 +3,7 @@ import { WorldState } from "./world";
 
 export interface SimulationResult {
   simulation_id: string;
-  applied_effects: Record<string, any>[];
+  applied_effects: Record<string, unknown>[];
   events_triggered: string[];
   updated_world_state: WorldState;
   success: boolean;

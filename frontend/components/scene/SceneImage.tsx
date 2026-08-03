@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Image as ImageIcon, Sparkles, RefreshCw } from "lucide-react";
+import { Image as ImageIcon, Sparkles } from "lucide-react";
 import type { SceneMediaAssets } from "@/types/scene";
 
 interface SceneImageProps {

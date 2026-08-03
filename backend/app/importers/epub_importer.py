@@ -12,8 +12,8 @@ import os
 import zipfile
 
 try:
-    import ebooklib
-    from ebooklib import epub
+    import ebooklib  # type: ignore[import-untyped]
+    from ebooklib import epub  # type: ignore[import-untyped]
 except ImportError:
     ebooklib = None  # type: ignore[assignment]
     epub = None  # type: ignore[assignment]

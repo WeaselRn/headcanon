@@ -23,8 +23,6 @@ from app.importers.exceptions import (
     InvalidEncodingError,
     MissingFileError,
     NetworkImportError,
-    ParsingFailureError,
-    StoryImportError,
     UnsupportedFormatError,
 )
 from app.importers.pdf_importer import PDFImporter
@@ -32,13 +30,14 @@ from app.importers.text_importer import TextImporter
 from app.importers.web_importer import WebImporter
 from app.models.document import StoryDocument
 
-
 # ---------------------------------------------------------------------------
 # Helpers to generate synthetic test assets in memory
 # ---------------------------------------------------------------------------
 
 
-def create_minimal_pdf_bytes(text: str = "Chapter 1: The Beginning\n\nOnce upon a time in a magical land.") -> bytes:
+def create_minimal_pdf_bytes(
+    text: str = "Chapter 1: The Beginning\n\nOnce upon a time in a magical land.",
+) -> bytes:
     """Create in-memory PDF bytes with extractable text using pypdf."""
     writer = pypdf.PdfWriter()
     writer.add_blank_page(width=612, height=792)
@@ -52,7 +51,9 @@ def create_minimal_pdf_bytes(text: str = "Chapter 1: The Beginning\n\nOnce upon 
         b"%PDF-1.4\n"
         b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
         b"2 0 obj << /Type /Pages /Kinds [3 0 R] /Count 1 >> endobj\n"
-        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >> endobj\n"
+        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]"
+        b" /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font"
+        b" /Subtype /Type1 /BaseFont /Helvetica >> >> >> >> endobj\n"
         b"4 0 obj << /Length 55 >> stream\n"
         b"BT /F1 12 Tf 100 700 Td (Chapter 1) Tj ET\n"
         b"endstream\n"
@@ -85,7 +86,8 @@ def create_minimal_epub_bytes(
             "META-INF/container.xml",
             '<?xml version="1.0"?>'
             '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
-            '  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>'
+            '  <rootfiles><rootfile full-path="OEBPS/content.opf" '
+            'media-type="application/oebps-package+xml"/></rootfiles>'
             '</container>',
         )
         z.writestr(
@@ -187,7 +189,10 @@ class TestTextImporter:
         importer = TextImporter()
         # Invalid UTF-8 sequence that fails utf-8 / utf-8-sig and yields invalid utf-8
         bad_bytes = b"\x80\x81\x82"
-        with patch("app.importers.text_importer._decode_bytes", side_effect=InvalidEncodingError("Invalid bytes")):
+        with patch(
+            "app.importers.text_importer._decode_bytes",
+            side_effect=InvalidEncodingError("Invalid bytes"),
+        ):
             with pytest.raises(InvalidEncodingError):
                 importer.import_story(bad_bytes)
 
@@ -216,7 +221,10 @@ class TestPDFImporter:
             importer.validate_source(b"NOT A PDF HEADER")
 
     def test_import_valid_pdf_bytes(self):
-        pdf_bytes = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF"
+        pdf_bytes = (
+            b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj"
+            b"\ntrailer << /Root 1 0 R >>\n%%EOF"
+        )
         mock_page = MagicMock()
         mock_page.extract_text.return_value = "Chapter 1\n\nHarry walked into Hogwarts."
         mock_reader = MagicMock()

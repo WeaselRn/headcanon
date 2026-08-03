@@ -22,14 +22,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pydantic import ValidationError
 
 from app.engines.universe_builder import (
     AIClient,
     BuildRequest,
     GeminiClientAdapter,
-    UniverseBuildError,
     UniverseBuilder,
+    UniverseBuildError,
     _as_list,
     _ensure_id_prefix,
     _generate_universe_id,
@@ -50,7 +49,6 @@ from app.world.object import ObjectCategory
 from app.world.relationship import RelationshipType
 from app.world.timeline import EventType
 from app.world.universe import ImportSource, WorldRuleCategory
-
 
 # ---------------------------------------------------------------------------
 # Stub AI Client
@@ -480,7 +478,7 @@ class TestLocationBuilder:
         assert locs[0].id == "loc_forest"
 
     def test_removes_self_loop_connections(self, builder: UniverseBuilder) -> None:
-        raw = [
+        raw: list[dict[str, Any]] = [
             {
                 "id": "loc_great_hall",
                 "name": "Great Hall",

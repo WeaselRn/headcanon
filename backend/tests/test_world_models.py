@@ -9,38 +9,46 @@ They do NOT test any engine logic, AI behaviour, or storage.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
 from app.world.character import (
     Character,
     CharacterAbility,
-    CharacterGoal,
     CharacterPersonality,
-    CharacterSpeech,
     EntityMetadata,
-    MoralAlignment,
 )
 from app.world.emotion import EmotionCategory, EmotionState
-from app.world.event import Event, EventCategory
-from app.world.inventory import Inventory, InventoryItem, InventoryType, ItemCondition
-from app.world.knowledge_graph import EdgeRelationship, GraphEdge, GraphNode, KnowledgeGraph, NodeType
+from app.world.inventory import Inventory, InventoryItem, InventoryType
+from app.world.knowledge_graph import (
+    EdgeRelationship,
+    GraphEdge,
+    GraphNode,
+    KnowledgeGraph,
+    NodeType,
+)
 from app.world.location import Location, LocationCategory
-from app.world.memory import Memory, MemoryEmotion, MemoryType
+from app.world.memory import Memory, MemoryType
 from app.world.object import Object, ObjectCategory
 from app.world.relationship import Relationship, RelationshipScores, RelationshipType
 from app.world.scene import Scene, SceneLocationSummary, SceneMetadata
 from app.world.snapshot import Snapshot, SnapshotMetadata, SnapshotSaveType, SnapshotVersionMetadata
-from app.world.timeline import EventStatus, EventType, Timeline, TimelineEvent, WorldTime
-from app.world.universe import ImportSource, Universe, UniverseMetadata, WorldRule, WorldRuleCategory
+from app.world.timeline import EventStatus, Timeline, TimelineEvent, WorldTime
+from app.world.universe import (
+    ImportSource,
+    Universe,
+    UniverseMetadata,
+    WorldRule,
+    WorldRuleCategory,
+)
 from app.world.world_state import CharacterState, ObjectState, WorldState
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-NOW = datetime(2026, 8, 1, 9, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 1, 9, 0, 0, tzinfo=UTC)
 
 
 def minimal_character(char_id: str = "char_harry") -> Character:

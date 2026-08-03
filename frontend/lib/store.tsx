@@ -66,9 +66,10 @@ export function HeadcanonProvider({ children }: { children: ReactNode }) {
 
       const snapList = await api.listSnapshots(universeId);
       setSnapshots(snapList);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load universe:", err);
-      setError(err?.response?.data?.detail || err.message || "Failed to load universe.");
+      const e = err as { response?: { data?: { detail?: string } }; message?: string };
+      setError(e?.response?.data?.detail || e?.message || "Failed to load universe.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -102,9 +103,10 @@ export function HeadcanonProvider({ children }: { children: ReactNode }) {
         const refreshedScene = await api.refreshScene(universe.universe_id, newLocationId);
         setScene(refreshedScene);
         if (newLocationId) setSelectedLocationId(newLocationId);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Action execution failed:", err);
-        setError(err?.response?.data?.detail || err.message || "Action execution failed.");
+        const e = err as { response?: { data?: { detail?: string } }; message?: string };
+        setError(e?.response?.data?.detail || e?.message || "Action execution failed.");
       } finally {
         setIsLoading(false);
         setLoadingMessage("");
@@ -139,7 +141,7 @@ export function HeadcanonProvider({ children }: { children: ReactNode }) {
       if (mediaRes.asset_metadata) {
         setMediaAssets((prev) => [...mediaRes.asset_metadata, ...prev]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Media generation failed:", err);
       setError("Media generation failed.");
     } finally {
@@ -157,7 +159,7 @@ export function HeadcanonProvider({ children }: { children: ReactNode }) {
       try {
         const newSnap = await api.createSnapshot(universe.universe_id, description);
         setSnapshots((prev) => [newSnap, ...prev]);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to create snapshot:", err);
         setError("Failed to create snapshot.");
       }
@@ -178,7 +180,7 @@ export function HeadcanonProvider({ children }: { children: ReactNode }) {
         setWorldState(restoredSnap.world_state);
         const refreshedScene = await api.refreshScene(universe.universe_id);
         setScene(refreshedScene);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Snapshot restoration failed:", err);
         setError("Snapshot restoration failed.");
       } finally {

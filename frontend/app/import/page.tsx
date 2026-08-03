@@ -32,9 +32,10 @@ export default function ImportPage() {
       });
 
       router.push(`/universe/${res.universe_id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import failed:", err);
-      setError(err?.response?.data?.detail || err.message || "Failed to import story.");
+      const e = err as { response?: { data?: { detail?: string } }; message?: string };
+      setError(e?.response?.data?.detail || e?.message || "Failed to import story.");
     } finally {
       setLoading(false);
     }

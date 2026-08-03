@@ -14,8 +14,6 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 
-import pytest
-
 from app.engines.character_engine import CharacterEngine
 from app.engines.interaction_engine import (
     InteractionEngine,
@@ -33,7 +31,13 @@ from app.world.location import Location, LocationCategory
 from app.world.object import Object, ObjectCategory
 from app.world.scene import Scene
 from app.world.timeline import WorldTime
-from app.world.universe import ImportSource, Universe, UniverseMetadata, WorldRule, WorldRuleCategory
+from app.world.universe import (
+    ImportSource,
+    Universe,
+    UniverseMetadata,
+    WorldRule,
+    WorldRuleCategory,
+)
 from app.world.world_state import CharacterState, LocationState, WorldState
 
 

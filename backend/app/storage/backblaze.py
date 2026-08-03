@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 try:
-    import boto3
-    from botocore.exceptions import ClientError
+    import boto3  # type: ignore[import-untyped]
+    from botocore.exceptions import ClientError  # type: ignore[import-untyped]
 except ImportError:
     boto3 = None  # type: ignore[assignment]
 
@@ -26,7 +26,8 @@ class BackblazeClient:
         if self._s3_client is None:
             if boto3 is None:
                 raise RuntimeError(
-                    "boto3 package is not installed. Please install boto3 to perform Backblaze S3 operations."
+                    "boto3 package is not installed. "
+                    "Please install boto3 to perform Backblaze S3 operations."
                 )
             endpoint_url = (
                 self.endpoint

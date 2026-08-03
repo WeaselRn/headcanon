@@ -4,7 +4,8 @@ Unit tests for Headcanon World Simulation System (Milestone 7).
 Tests TimelineEngine and SimulationEngine for:
   - Time progression & day/hour overflow handling
   - Chronological event creation, sequence ordering, and timeline branching
-  - Executing pending world effects (location updates, inventory transfers, relationship updates, time advances)
+  - Executing pending world effects (location updates, inventory transfers,
+    relationship updates, time advances)
   - Relationship score clamping [0, 100] and delta capping (+/-10)
   - NPC background activity scheduling
   - WorldState validation against Universe models
@@ -15,8 +16,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-import pytest
-
 from app.engines.interaction_engine import InteractionResult
 from app.engines.simulation_engine import SimulationEngine, SimulationResult
 from app.engines.timeline_engine import TimelineEngine
@@ -25,7 +24,6 @@ from app.world.location import Location, LocationCategory
 from app.world.object import Object, ObjectCategory
 from app.world.scene import Scene, SceneLocationSummary
 from app.world.timeline import (
-    EventStatus,
     EventType,
     Timeline,
     TimelineBranch,
@@ -231,7 +229,8 @@ class TestSimulationEngine:
             pending_world_effects=[
                 {
                     "type": "suggest_relationships",
-                    "changes": [{"target": "char_hermione", "delta": 25}],  # Should be capped at +10
+                    # Should be capped at +10
+                    "changes": [{"target": "char_hermione", "delta": 25}],
                 }
             ],
             success=True,
@@ -281,7 +280,9 @@ class TestSimulationEngine:
         ws = create_sample_world_state()
 
         # Add invalid character to WorldState
-        ws.characters["char_ghost"] = CharacterState(character_id="char_ghost", location="loc_library")
+        ws.characters["char_ghost"] = CharacterState(
+            character_id="char_ghost", location="loc_library"
+        )
 
         valid, err = engine.validate_world_state(ws, uni)
         assert not valid

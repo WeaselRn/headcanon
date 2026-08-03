@@ -14,7 +14,7 @@ import InventoryPanel from "@/components/inventory/InventoryPanel";
 import JournalPanel from "@/components/journal/JournalPanel";
 import SnapshotPanel from "@/components/storage/SnapshotPanel";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
-import { Compass, BookOpen, Layers, Settings, ShieldAlert } from "lucide-react";
+import { Compass, Settings, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 
 export default function SceneView() {

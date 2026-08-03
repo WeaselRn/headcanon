@@ -22,9 +22,10 @@ export default function UniverseDashboardPage() {
       try {
         const u = await getUniverse(universeId);
         setUniverse(u);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to load universe dashboard:", err);
-        setError(err?.response?.data?.detail || "Universe not found.");
+        const e = err as { response?: { data?: { detail?: string } } };
+        setError(e?.response?.data?.detail || "Universe not found.");
       } finally {
         setLoading(false);
       }

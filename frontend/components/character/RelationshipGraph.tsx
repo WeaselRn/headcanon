@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Heart, Users } from "lucide-react";
+import { Heart } from "lucide-react";
 import type { SceneCharacterSummary } from "@/types/scene";
 
 interface RelationshipGraphProps {
