@@ -1,8 +1,6 @@
-# IMPLEMENTATION.md
+# AGENTS.md
 
-# Headcanon Implementation Guide
-
-## Purpose
+# Purpose
 
 This document defines the implementation rules for every AI agent contributing to Headcanon.
 
